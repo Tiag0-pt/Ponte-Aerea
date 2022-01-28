@@ -237,8 +237,8 @@ static bool checkPassport()
 
     /* insert your code here */
 
+    sh->fSt.nPassengersInFlight[sh->fSt.nFlight] += 1;
     sh->fSt.nPassInQueue -= 1;
-    sh->fSt.nPassengersInFlight += 1;
     sh->fSt.totalPassBoarded += 1;
 
     unsigned int passengersInFlight = nPassengersInFlight ();

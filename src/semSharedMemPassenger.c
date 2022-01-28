@@ -44,7 +44,7 @@ static SHARED_DATA *sh;
 static bool travelToAirport ();
 static void waitInQueue (unsigned int passengerId);
 static void waitUntilDestination (unsigned int passengerId);
-static void leavePlane (unsigned int passengerId);
+//static void leavePlane (unsigned int passengerId);
 
 /**
  *  \brief Main program.
@@ -161,7 +161,7 @@ static void waitInQueue (unsigned int passengerId)
 
     semUp(semgid, sh->passengersInQueue);
     semDown(semgid, sh->passengersWaitInQueue); // espera que a hostess dê up
-    semUp(semgid,sh->idShown); // Mostra o id para a hostess dê down
+     
 
     if (semDown (semgid, sh->mutex) == -1) {                                                  /* enter critical region */
         perror ("error on the down operation for semaphore access (PG)");
@@ -178,6 +178,8 @@ static void waitInQueue (unsigned int passengerId)
     }
 
     /* insert your code here */
+    sh->fSt.passengerChecked = passengerId;
+    semUp(semgid,sh->idShown); // Mostra o id para a hostess dê down
    
 
 }
@@ -207,10 +209,10 @@ static void waitUntilDestination (unsigned int passengerId)
     /* insert your code here */
    
     sh->fSt.st.passengerStat[passengerId] = AT_DESTINATION;
-    sh->fSt.nPassengersInFlight -= 1;
+    sh->fSt.nPassengersInFlight[sh->fSt.nFlight] -= 1;
     saveState(nFic,&sh->fSt);
 
-    if(sh->fSt.nPassengersInFlight == 0){
+    if(sh->fSt.nPassengersInFlight[sh->fSt.nFlight] == 0){
         semUp(semgid,sh->planeEmpty);
     }
 
