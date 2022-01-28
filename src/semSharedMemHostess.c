@@ -116,9 +116,13 @@ int main (int argc, char *argv[])
         do { 
             waitForPassenger();
             lastPassengerInFlight = checkPassport();
+            if(lastPassengerInFlight){
+                    signalReadyToFlight();
+            }
+
             nPassengers++;
         } while (!lastPassengerInFlight);
-        signalReadyToFlight();
+        
     }
 
     /* unmapping the shared region off the process address space */
@@ -148,6 +152,7 @@ static void waitForNextFlight ()
 
     
     /* insert your code here */
+
     sh->fSt.st.hostessStat = WAIT_FOR_FLIGHT;
     saveState(nFic,&sh->fSt);
     
@@ -157,7 +162,10 @@ static void waitForNextFlight ()
     }
 
     /* insert your code here */
+        //     sh->fSt.nPassInFlight=0;
+
     semDown(semgid,sh->readyForBoarding);
+
 }
 
 /**
@@ -175,7 +183,7 @@ static void waitForPassenger ()
     }
 
     /* insert your code here */
-    sh->fSt.st.hostessStat = WAIT_FOR_PASSENGER;
+    sh->fSt.st.hostessStat = 1;
     saveState(nFic,&sh->fSt);
     
 
@@ -237,20 +245,25 @@ static bool checkPassport()
 
     /* insert your code here */
 
-    sh->fSt.nPassengersInFlight[sh->fSt.nFlight] += 1;
+    
     sh->fSt.nPassInQueue -= 1;
+    sh->fSt.nPassInFlight+=1;
     sh->fSt.totalPassBoarded += 1;
 
     unsigned int passengersInFlight = nPassengersInFlight ();
     unsigned int passengersInQueue = nPassengersInQueue();
 
 
-    if((passengersInFlight>MINFC && passengersInQueue==0) || passengersInFlight == MAXFC){
+
+    if((passengersInFlight>MINFC && passengersInQueue==0) || passengersInFlight == MAXFC || (sh->fSt.totalPassBoarded == N)){
         last = 1;
+            
+
     }
 
     savePassengerChecked(nFic,&sh->fSt);
     saveState(nFic,&sh->fSt);
+    
 
 
 
@@ -260,6 +273,7 @@ static bool checkPassport()
     }
 
     /* insert your code here */
+    sh->fSt.nPassengersInFlight[sh->fSt.nFlight-1] += 1;
     
 
     return last;
@@ -273,7 +287,7 @@ static int nPassengersInFlight()
 static int nPassengersInQueue()
 {
     return sh->fSt.nPassInQueue;
-}
+}   
 
 /**
  *  \brief signal ready to flight 
@@ -295,13 +309,18 @@ void  signalReadyToFlight()
     sh->fSt.st.hostessStat = READY_TO_FLIGHT;
     saveState(nFic,&sh->fSt);
 
+    
+
     if (semUp (semgid, sh->mutex) == -1) {                                                     /* exit critical region */
         perror ("error on the up operation for semaphore access (HT)");
         exit (EXIT_FAILURE);
     }
 
     /* insert your code here */
+    
+
     semUp(semgid,sh->readyToFlight);
+
     
 }
 

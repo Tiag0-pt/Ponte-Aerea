@@ -147,7 +147,7 @@ static void waitInQueue (unsigned int passengerId)
 
     /* insert your code here */
     sh->fSt.nPassInQueue += 1;
-    sh->fSt.st.passengerStat[passengerId] = IN_QUEUE;
+    sh->fSt.st.passengerStat[passengerId] = 1;
     saveState(nFic,&sh->fSt);
     
     
@@ -169,17 +169,23 @@ static void waitInQueue (unsigned int passengerId)
     }
 
     /* insert your code here */
+    sh->fSt.passengerChecked = passengerId;
     sh->fSt.st.passengerStat[passengerId] = IN_FLIGHT;
     saveState(nFic,&sh->fSt);
+   
     
-    if (semUp (semgid, sh->mutex) == -1) {                                                  /* enter critical region */
+    if (semUp (semgid, sh->mutex) == -1) {                                                  /* exit critical region */
         perror ("error on the down operation for semaphore access (PG)");
         exit (EXIT_FAILURE);
     }
 
     /* insert your code here */
-    sh->fSt.passengerChecked = passengerId;
+   
     semUp(semgid,sh->idShown); // Mostra o id para a hostess dê down
+
+   
+   
+
    
 
 }
@@ -209,12 +215,27 @@ static void waitUntilDestination (unsigned int passengerId)
     /* insert your code here */
    
     sh->fSt.st.passengerStat[passengerId] = AT_DESTINATION;
-    sh->fSt.nPassengersInFlight[sh->fSt.nFlight] -= 1;
+    sh->fSt.nPassInFlight -=1;
     saveState(nFic,&sh->fSt);
 
-    if(sh->fSt.nPassengersInFlight[sh->fSt.nFlight] == 0){
+    
+
+    if(sh->fSt.nPassInFlight == 0){
         semUp(semgid,sh->planeEmpty);
     }
+
+    // Versão masoquista --> par quem gosta de erros  estúpidos
+
+   /*  sh->fSt.st.passengerStat[passengerId] = AT_DESTINATION;
+    sh->fSt.nPassengersInFlight[sh->fSt.nFlight - 1] -= 1;
+    sh->fSt.nPassInFlight -=1;
+    saveState(nFic,&sh->fSt);
+
+    
+
+    if(sh->fSt.nPassengersInFlight[sh->fSt.nFlight-1] == 0){
+        semUp(semgid,sh->planeEmpty);
+    } */
 
     if (semUp (semgid, sh->mutex) == -1) {                                                  /* enter critical region */
         perror ("error on the down operation for semaphore access (PG)");

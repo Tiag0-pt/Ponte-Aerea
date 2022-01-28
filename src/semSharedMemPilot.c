@@ -142,6 +142,8 @@ static void flight (bool go)
     }
 
     /* insert your code here */
+    
+    
     if(go){
         sh->fSt.st.pilotStat = FLYING;
         saveFlightDeparted(nFic,&sh->fSt);
@@ -216,7 +218,9 @@ static void waitUntilReadyToFlight ()
     }
 
     /* insert your code here */
+   
     semDown(semgid,sh->readyToFlight);
+    
 
 }
 
@@ -236,9 +240,12 @@ static void dropPassengersAtTarget ()
     }
 
     /* insert your code here */
-    for(int i=0;i<sh->fSt.nPassengersInFlight[sh->fSt.nFlight];i++){
+    for(int i=0;i<sh->fSt.nPassengersInFlight[sh->fSt.nFlight-1];i++){
         semUp(semgid,sh->passengersWaitInFlight);
     }
+    sh->fSt.st.pilotStat = DROPING_PASSENGERS;
+    saveFlightArrived(nFic,&sh->fSt);
+    saveState(nFic,&sh->fSt);
 
     
     
@@ -248,6 +255,7 @@ static void dropPassengersAtTarget ()
     }
 
     /* insert your code here */
+    
     semDown(semgid,sh->planeEmpty);
 
     if (semDown (semgid, sh->mutex) == -1) {                                                  /* enter critical region */
@@ -260,12 +268,9 @@ static void dropPassengersAtTarget ()
     
     if(sh->fSt.totalPassBoarded == N){
         sh->fSt.finished = 1;
-        saveAirLiftResult(nFic,&sh->fSt);
-    } else{
-        saveFlightReturning(nFic,&sh->fSt);
     }
+
     
-    saveState(nFic,&sh->fSt);
 
     if (semUp (semgid, sh->mutex) == -1)  {                                                   /* exit critical region */
         perror ("error on the up operation for semaphore access (PT)");
